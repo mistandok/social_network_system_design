@@ -1,0 +1,867 @@
+openapi: 3.0.3
+
+info:
+  title: REST API социальной сети для путешествий
+  description: |-
+    Описание API для работы с социальной сетью для путешествий.
+  version: 1.0.0
+
+tags:
+  - name: auth
+    description: авторизация и аутентификация в системе. Получаем пару токенов. Access-token содержит информацию о текущем пользователе и его уровне доступа.
+  - name: posts
+    description: публикация и просмотр постов
+  - name: attachments
+    description: публикация и просмотр вложений
+  - name: reactions
+    description: публикация и просмотр реакций
+  - name: comments
+    description: публикация и просмотр комментариев
+  - name: subscriptions
+    description: управление подпиской
+
+paths:
+
+  /api/v1/signup:
+    post:
+      tags:
+        - auth
+      summary: Регистрация
+      description: Регистрация нового пользователя
+      requestBody:
+        description: Создание пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpIn'
+        required: true
+      responses:
+        '200':
+          description: успешная регистрация.
+        '409':
+          description: пользователь уже существует.
+        '500':
+          description: ошибка сервиса.
+
+  /api/v1/login:
+    post:
+      tags:
+        - auth
+      summary: Авторизация
+      description: Вход в аккаунт.
+      requestBody:
+        description: Данные аккаунты для входа
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginIn'
+        required: true
+      responses:
+        '200':
+          description: успешная авторизация.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginOut'
+        '403':
+          description: некорректные данные для входа.
+        '500':
+          description: ошибка сервиса.
+
+  /api/v1/logout:
+    post:
+      tags:
+        - auth
+      summary: Выход из аккаунта
+      description: Предоставляет клиенту возможность осуществить выход из аккаунта.
+      responses:
+        '200':
+          description: access-token и refresh-token теперь в блоклисте и более недоступны.
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+  /api/v1/refresh:
+    post:
+      tags:
+        - auth
+      summary: Обновление access-токена
+      description: Обновление access-токена
+      responses:
+        '200':
+          description: успешное обновление токена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshOut'
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+  /api/v1/posts:
+    post:
+      tags:
+        - posts
+      summary: Создание поста
+      description: создание поста пользователя
+      requestBody:
+        description: Данные аккаунты для входа
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCreateIn'
+      responses:
+        '200':
+          description: успешное добавление поста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostCreateOut'
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+    get:
+      tags:
+        - posts
+      summary: Получение списка постов
+      description: создание поста пользователя
+      parameters:
+        - name: user_id
+          in: query
+          description: фильтрация по идентификатору пользователя
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: location
+          in: query
+          description: фильтрация по координатам
+          required: false
+          schema:
+            $ref: '#/components/schemas/Location'
+        - name: limit
+          in: query
+          description: limit записей
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: offset записей
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: успешное получение списка постов.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostsListOut'
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '404':
+          description: пост не найден.
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+  /api/v1/posts/{post_id}:
+    delete:
+      tags:
+        - posts
+      summary: Удаление поста
+      description: создание поста пользователя
+      parameters:
+        - name: post_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: успешное удаление поста.
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+    get:
+      tags:
+        - posts
+      summary: Получение поста
+      description: создание поста пользователя
+      parameters:
+        - name: post_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: успешное получение поста.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostGetOut'
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '404':
+          description: пост не найден.
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+  /api/v1/posts/{post_id}/attachments:
+    post:
+      tags:
+        - attachments
+      summary: Добавление вложения к посту
+      description: Добавляет к заданному посту вложение
+      parameters:
+        - name: post_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/octet-stream: {}
+      responses:
+        '200':
+          description: успешное добавление вложения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attachment'
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+    get:
+      tags:
+        - attachments
+      summary: Получение списка вложений для поста
+      description: Позволяет получить список вложений, связанных с постом
+      parameters:
+        - name: post_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: успешное получение вложений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttachmentsGetListOut'
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+  /api/v1/posts/{post_id}/attachments/{attachement_id}:
+    delete:
+      tags:
+        - attachments
+      summary: Удаление вложения для поста
+      description: Позволяет удалить вложение, связанное с постом.
+      parameters:
+        - name: post_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: attachement_id
+          in: path
+          description: идентификатор вложения
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: успешное удаление вложения
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+  /api/v1/posts/{post_id}/reactions:
+    post:
+      tags:
+        - reactions
+      summary: Послать реакцию на пост
+      description: Позволяет передать заданный тип реакции к посту. Если реакция переданного типа уже проставлена, то отменит ее.
+      parameters:
+        - name: post_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Данные о реакции
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReactionPostIn'
+      responses:
+        '200':
+          description: успешное добавление реакции
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+    get:
+      tags:
+        - reactions
+      summary: Получить реакции, ассоциированные с постом
+      parameters:
+        - name: post_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: reaction_type
+          in: query
+          description: тип реакции
+          required: false
+          schema:
+            type: number
+            format: int64
+        - name: limit
+          in: query
+          description: limit записей
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: offset записей
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: успешный поиск реакций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReactionsGetOut'
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+  /api/v1/posts/{post_id}/comments:
+    post:
+      tags:
+        - comments
+      summary: Добавление комментария к посту
+      description: Добавляет к заданному посту комментарий
+      parameters:
+        - name: post_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Информация о комментарии для публикации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentsPostIn'
+      responses:
+        '200':
+          description: успешное добавление комментария
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentsPostOut'
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+
+    get:
+      tags:
+        - comments
+      summary: Получение списка комментариев для поста
+      description: Позволяет получить список вложений, связанных с постом
+      parameters:
+        - name: post_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: limit записей
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: offset записей
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: успешное получение комментариев
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentsGetOut'
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+  /api/v1/posts/{post_id}/comments/{comment_id}:
+    delete:
+      tags:
+        - comments
+      summary: Удаление комментария
+      description: Позволяет удалить комментарий пользователя под постом.
+      parameters:
+        - name: post_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: comment_id
+          in: path
+          description: идентификатор комментария
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: успешное удаление вложения
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+  /api/v1/subscriptions/{user_id}:
+    post:
+      tags:
+        - subscriptions
+      summary: Подписаться на пользователя
+      description: Позволяет подписаться на заданного пользователя
+      parameters:
+        - name: user_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: успешная подписка на пользователя
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+    delete:
+      tags:
+        - subscriptions
+      summary: Отписаться от пользователя
+      description: Позволяет отписаться от заданного пользователя
+      parameters:
+        - name: user_id
+          in: path
+          description: идентификатор поста
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: успешная отписка от пользователя
+        '401':
+          description: ошибки авторизации.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenUnauthorizedError'
+        '500':
+          description: ошибка сервиса.
+      security:
+        - Bearer: []
+
+
+components:
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      name: Authorization
+      in: header
+      description: >-
+        Введите токен с префиксом `Bearer: `, к примеру "Bearer: abcde12345".
+  schemas:
+
+    SignUpIn:
+      type: object
+      properties:
+        login:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        confirm_password:
+          type: string
+
+    LoginIn:
+      type: object
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+
+    LoginOut:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+
+    TokenUnauthorizedError:
+      type: object
+      properties:
+        msg:
+          type: string
+
+    RefreshOut:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: access-token содержит информацию о пользователе
+
+    PostCreateIn:
+      type: object
+      properties:
+        description:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+
+    PostCreateOut:
+      type: object
+      properties:
+        post_id:
+          type: string
+          format: uuid
+          example: 34eff27b-4c53-4822-a7da-d60e3cc90ba6
+
+    PostsListOut:
+      type: object
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostGetOut'
+        has_more:
+          type: boolean
+          example: false
+
+    PostGetOut:
+      type: object
+      properties:
+        post_id:
+          type: string
+          format: uuid
+          example: 34eff27b-4c53-4822-a7da-d60e3cc90ba6
+        user_id:
+          type: string
+          format: uuid
+          example: 34eff27b-4c53-4822-a7da-d60e3cc90ba6
+        description:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        attachments:
+          type: array
+          description: "фотографии, ассоциированные с постом"
+          items:
+            $ref: '#/components/schemas/Attachment'
+
+    AttachmentsGetListOut:
+      type: object
+      properties:
+        attachments:
+          type: array
+          description: "фотографии, ассоциированные с постом"
+          items:
+            $ref: '#/components/schemas/Attachment'
+
+    Attachment:
+      type: object
+      properties:
+        attachment_id:
+          type: string
+          format: uuid
+        content_type:
+          type: string
+          example: "image"
+        url:
+          type: string
+          format: url
+
+    ReactionPostIn:
+      type: object
+      properties:
+        reaction:
+          $ref: '#/components/schemas/Reaction'
+
+    Reaction:
+      type: string
+      enum:
+        - LIKE
+        - DISLIKE
+
+    ReactionsGetOut:
+      type: object
+      properties:
+        reactions:
+          type: array
+          description: "реакции, ассоциированные с постом"
+          items:
+            $ref: '#/components/schemas/ReactionInfo'
+        meta:
+          type: object
+          properties:
+            total_reactions:
+              type: array
+              description: "реакции, ассоциированные с постом"
+              items:
+                $ref: '#/components/schemas/ReactionInfoTotal'
+            has_more:
+              type: boolean
+
+    ReactionInfo:
+      type: object
+      properties:
+        reaction_id:
+          type: string
+          format: uuid
+        from_user_id:
+          type: string
+          format: uuid
+        post_id:
+          type: string
+          format: uuid
+        reaction_type:
+          $ref: '#/components/schemas/Reaction'
+
+    ReactionInfoTotal:
+      type: object
+      properties:
+        reaction_type:
+          $ref: '#/components/schemas/Reaction'
+        count:
+          type: integer
+
+    CommentsPostIn:
+      type: object
+      properties:
+        text:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CommentsPostOut:
+      type: object
+      properties:
+        comment_id:
+          type: string
+          format: uuid
+          example: 34eff27b-4c53-4822-a7da-d60e3cc90ba6
+
+    CommentsGetOut:
+      type: object
+      properties:
+        comments:
+          type: array
+          description: комментарии, ассоциировнные с постом
+          items:
+            $ref: '#/components/schemas/CommentInfo'
+        meta:
+          type: object
+          properties:
+            has_more:
+              type: boolean
+
+    CommentInfo:
+      type: object
+      properties:
+        comment_id:
+          type: string
+          format: uuid
+        from_user_id:
+          type: string
+          format: uuid
+        post_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    SubsriptionsPostIn:
+      type: object
+      properties:
+        subscribe_to_user_id:
+          type: string
+          format: uuid
+
+    Location:
+      type: array
+      description: координаты
+      items:
+        type: number
+        format: double
+        description: The coordinate
+      example: [59.9311, 30.3609]
