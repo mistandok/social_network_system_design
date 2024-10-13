@@ -260,20 +260,12 @@ paths:
       security:
         - Bearer: []
 
-  /api/v1/posts/{post_id}/attachments:
+  /api/v1/attachments:
     post:
       tags:
         - attachments
-      summary: Добавление вложения к посту
-      description: Добавляет к заданному посту вложение
-      parameters:
-        - name: post_id
-          in: path
-          description: идентификатор поста
-          required: true
-          schema:
-            type: string
-            format: uuid
+      summary: Добавление медиа
+      description: Сохраняет медиа для пользователя
       requestBody:
         required: true
         content:
@@ -297,52 +289,13 @@ paths:
       security:
         - Bearer: []
 
-    get:
-      tags:
-        - attachments
-      summary: Получение списка вложений для поста
-      description: Позволяет получить список вложений, связанных с постом
-      parameters:
-        - name: post_id
-          in: path
-          description: идентификатор поста
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: успешное получение вложений
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AttachmentsGetListOut'
-        '401':
-          description: ошибки авторизации.
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/TokenUnauthorizedError'
-        '500':
-          description: ошибка сервиса.
-      security:
-        - Bearer: []
-
-  /api/v1/posts/{post_id}/attachments/{attachement_id}:
+  /api/v1/attachments/{attachement_id}:
     delete:
       tags:
         - attachments
-      summary: Удаление вложения для поста
-      description: Позволяет удалить вложение, связанное с постом.
+      summary: Удаление пользовательское медиа
+      description: Позволяет удалить медиа, принадлежащее пользователю.
       parameters:
-        - name: post_id
-          in: path
-          description: идентификатор поста
-          required: true
-          schema:
-            type: string
-            format: uuid
         - name: attachement_id
           in: path
           description: идентификатор вложения
@@ -686,6 +639,9 @@ components:
           type: string
         location:
           $ref: '#/components/schemas/Location'
+        attachments:
+          $ref: '#/components/schemas/Attachments'
+
 
     PostCreateOut:
       type: object
@@ -722,10 +678,7 @@ components:
         location:
           $ref: '#/components/schemas/Location'
         attachments:
-          type: array
-          description: "фотографии, ассоциированные с постом"
-          items:
-            $ref: '#/components/schemas/Attachment'
+          $ref: '#/components/schemas/Attachments'
 
     AttachmentsGetListOut:
       type: object
@@ -865,3 +818,12 @@ components:
         format: double
         description: The coordinate
       example: [59.9311, 30.3609]
+
+    Attachments:
+      type: array
+      description: ссылки на медиа
+      items:
+        type: string
+        format: string
+        description: ссылки
+      example: [url(/attachments/media_1.png), url(/attachments/media_2.png)]
