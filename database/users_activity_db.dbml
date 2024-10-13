@@ -1,0 +1,21 @@
+// MongoDB - кажется, что NoSQL тет неплохо зайдет.
+// Много реакций, много комментариев, невзаимосвязанные сущности, особая транзакционность не нужна.
+
+Enum reaction_type {
+  like
+  dislike
+}
+
+Table reactions {
+  id uuid [primary key]
+  post_id uuid [not null]
+  type reaction_type // тут вообще json должен быть по типу {like: 10, dislike: 5} где ключ - это тип реакции, а значение - количество
+}
+
+Table comments {
+    id uuid [primary key]
+    post_id uuid [not null]
+    from_user_id uuid [not null]
+    text text
+    created_at timestamp
+}
