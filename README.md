@@ -67,9 +67,9 @@
   
     ```
     Traffic write
-      5 вложений каждое по 3 MB
-      traffic write = rps * avg_request_size = 470 * 5 * 3 = 567_760 byte/s = 7 GB/s
-      traffic write for season = rps * avg_request_size = 940 * 5 * 3  = 14 GB/s
+      5 вложений каждое по 0.5 MB
+      traffic write = rps * avg_request_size = 470 * 5 * 0.5 = 1.1 GB/s
+      traffic write for season = rps * avg_request_size = 940 * 5 * 3  = 2.2 GB/s
     ```
 
 * Просмотр постов\ленты. Считаем, что за один запрос мы отдаем пользователю 10 постов. Так как в среднем ожидаем, что пользователь просматривает 100 постов, то получается 10 запросов в сутки. В сезон - 200 постов в сутки => 20 запросов в сутки. Плюс к каждому посту нужно вернуть несколько комментариев, пусть будет 5 штук
@@ -97,9 +97,9 @@
   
     ```
     Traffic write
-      5 вложений каждое по 3 MB
-      traffic read = rps * avg_request_size = 2400 * 5 * 3MB = 36 GB/s
-      traffic read for season = rps * avg_request_size = 4800 * 5 * 3MB  = 72 GB/s
+      5 вложений каждое по 0.5 MB
+      traffic read = rps * avg_request_size = 2400 * 5 * 3MB = 6 GB/s
+      traffic read for season = rps * avg_request_size = 4800 * 5 * 0.5MB  = 12 GB/s
     ```
 
   
@@ -180,17 +180,17 @@ disks = max(ceil(Disks_for_capacity), ceil(Disks_for_throughput), ceil(Disks_for
 ### Вложения
 
 ```bash
-traffic = traffic_write + traffic_read = 14 GB/s + 72 GB/s = 86 GB/s
+traffic = traffic_write + traffic_read = 12 GB/s + 2 GB/s = 14 GB/s
 iops = rps_write + rps_read = 940 + 4800 = 5740
 
 // У меня такое ощущение, что я очень сильно просчитался тут, раз до Петабайт добрался. Но вроде картинки гонять в таком объеме - это и правда дорого? Тут без CDN никак вообще.
-capacity = traffic * 86400 * 365 = 86 GB/s * 86400 * 365 = 2712 PB 
+capacity = traffic * 86400 * 365 = 14 GB/s * 86400 * 365 = 441 PB 
 
 // Посчитаем для SSD размером 100 TB, 1000 iops, пропускная способность 500 MB/s
-disks_for_capacity = capacity / disk_capacity = 2712 / 30 = 27_120_960
+disks_for_capacity = capacity / disk_capacity = 441 PB / 0.1 = 4410
 disks_for_throughput = traffic_per_second / disk_throughput = 86000 MB/s / 500 MB/s = 172 
 disks_for_iops = iops / disk_iops = 5740 / 1000 = 5.74
-disks = max(ceil(Disks_for_capacity), ceil(Disks_for_throughput), ceil(Disks_for_iops)) = 27_120_960
+disks = max(ceil(Disks_for_capacity), ceil(Disks_for_throughput), ceil(Disks_for_iops)) = 4410
 
-Итого 27_120_960 дисков по 100TB
+Итого 4410 дисков по 100TB
 ```
