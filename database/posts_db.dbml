@@ -1,0 +1,10 @@
+// PostgreSQL
+
+Table posts {
+  id uuid [primary key]
+  user_id uuid [not null]
+  description text
+  attachments text[]  // массив ссылок
+  location geography
+  created_at timestamp
+}

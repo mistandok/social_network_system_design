@@ -1,0 +1,9 @@
+// PostgreSQL
+
+Table users {
+  id uuid [primary key]
+  login text
+  email text
+  password text
+  created_at timestamp
+}
