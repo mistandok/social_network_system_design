@@ -1,0 +1,9 @@
+// S3 хранилище. К примеру Ceph.
+// Я с ними никогда не работал, поэтому опишу схему как для релиционки
+
+Table media {
+  id uuid [primary key]
+  content_type text
+  url text
+  data blob
+}

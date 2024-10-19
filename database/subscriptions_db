@@ -1,0 +1,16 @@
+// PostgreSQL. С графовыми не работал никогда.
+// Вроде выглядит корректно - если надо получить всех подписчиков для пользователя, то можно
+// SELECT subscriber_id FROM subscriptions WHERE user_id = ID
+// Если надо получить все подписки пользователя, то
+// SELECT user_id FROM subscriptions WHERE subscriber_id = ID
+
+Table subscriptions {
+  id uuid [primary key]
+  subscriber_id uuid [not null]
+  user_id uuid [not null]
+
+  Indexes {
+    (user_id, subscriber_id) [unique]
+    (subscriber_id, user_id) [unique]
+  }
+}
